@@ -1,3 +1,4 @@
+// DOM Element References
 const taskTitle = document.getElementById('taskTitle');
 const taskDay = document.getElementById('taskDay');
 const taskEffort = document.getElementById('taskEffort');
@@ -8,7 +9,9 @@ const copyModal = document.getElementById('copyModal');
 const copyDestination = document.getElementById('copyDestination');
 const confirmCopy = document.getElementById('confirmCopy');
 const copySelectedTasks = document.getElementById('copySelectedTasks');
-const uncheckAllTasks = document.getElementById('uncheckAllTasks'); // New button reference
+const uncheckAllTasks = document.getElementById('uncheckAllTasks');  // New button reference
+
+// Global Variables
 let weeklyProgress = 0;
 
 const EffortWeights = {
@@ -27,6 +30,15 @@ const dayProgress = {
   sunday: 100,
 };
 
+// Event Listeners
+addTask.addEventListener('click', addNewTask);
+taskTitle.addEventListener('keypress', handleEnterKeyPress);
+copySelectedTasks.addEventListener('click', handleMultipleTaskSelection);
+uncheckAllTasks.addEventListener('click', handleUncheckAllTasks);
+
+// Functions
+
+// Load Tasks from Local Storage
 function loadTasks() {
   Object.keys(dayProgress).forEach(day => {
     const dayColumn = document.getElementById(day);
@@ -41,6 +53,7 @@ function loadTasks() {
   });
 }
 
+// Save Tasks to Local Storage
 function saveTasks() {
   Object.keys(dayProgress).forEach(day => {
     const dayColumn = document.getElementById(day);
@@ -51,7 +64,7 @@ function saveTasks() {
       const title = task.querySelector('span').textContent;
       const Effort = Array.from(task.classList).find(cls => cls.startsWith('Effort-')).split('-')[1];
       const completed = task.classList.contains('completed');
-      const id = task.dataset.id; // Get the task ID
+      const id = task.dataset.id;
       return { title, day, Effort, completed, id };
     });
 
@@ -59,6 +72,7 @@ function saveTasks() {
   });
 }
 
+// Update Daily Progress
 function updateDailyProgress(day) {
   const dayColumn = document.getElementById(day);
   const taskList = dayColumn.querySelector('.task-list');
@@ -78,9 +92,7 @@ function updateDailyProgress(day) {
   tasks.forEach(task => {
     const Effort = Array.from(task.classList).find(cls => cls.startsWith('Effort-')).split('-')[1];
     EffortCounts[Effort]++;
-    if (task.classList.contains('completed')) {
-      completedWeight += EffortWeights[Effort];
-    }
+    if (task.classList.contains('completed')) completedWeight += EffortWeights[Effort];
   });
 
   const totalTasks = EffortCounts.low + EffortCounts.medium + EffortCounts.high;
@@ -96,14 +108,15 @@ function updateDailyProgress(day) {
   updateWeeklyProgress();
 }
 
+// Update Weekly Progress
 function updateWeeklyProgress() {
-  const days = Object.keys(dayProgress);
-  const totalProgress = days.reduce((sum, day) => sum + dayProgress[day], 0);
-  weeklyProgress = totalProgress / days.length;
+  const totalProgress = Object.keys(dayProgress).reduce((sum, day) => sum + dayProgress[day], 0);
+  weeklyProgress = totalProgress / Object.keys(dayProgress).length;
   progressPercentage.textContent = `${Math.round(weeklyProgress)}% Complete`;
   progressFill.style.width = `${weeklyProgress}%`;
 }
 
+// Add New Task
 function addNewTask() {
   const title = taskTitle.value.trim();
   const day = taskDay.value;
@@ -117,27 +130,26 @@ function addNewTask() {
   const taskItem = createTaskItem(title, day, Effort, false);
   const dayColumn = document.getElementById(day);
   const taskList = dayColumn.querySelector('.task-list');
-
   taskList.appendChild(taskItem);
   taskTitle.value = '';
   updateDailyProgress(day);
   saveTasks();
 }
 
+// Create Task Item
 function createTaskItem(title, day, Effort, completed, id = Date.now()) {
   const taskItem = document.createElement('li');
   taskItem.className = `task-item Effort-${Effort}`;
   if (completed) taskItem.classList.add('completed');
-
-  taskItem.dataset.id = id; // Add ID to task item
+  taskItem.dataset.id = id;
 
   taskItem.innerHTML = `
     <input type="checkbox" class="select-task">
     <span>${title}</span>
     <div class="actions">
-      <button class="complete"><i class="fas fa-check"></i></button>
-      <button class="delete"><i class="fas fa-trash"></i></button>
-      <button class="copy"><i class="fas fa-copy"></i></button>
+      <button class="complete" data-tooltip="Complete Task"><i class="fas fa-check"></i></button>
+      <button class="delete" data-tooltip="Delete Task"><i class="fas fa-trash"></i></button>
+      <button class="copy" data-tooltip="Copy Task"><i class="fas fa-copy"></i></button>
     </div>
   `;
 
@@ -153,70 +165,53 @@ function createTaskItem(title, day, Effort, completed, id = Date.now()) {
     saveTasks();
   });
 
-  taskItem.querySelector('.copy').addEventListener('click', () => {
-    openCopyModal([taskItem], day);
-  });
+  taskItem.querySelector('.copy').addEventListener('click', () => openCopyModal([taskItem], day));
 
   return taskItem;
 }
 
-copySelectedTasks.addEventListener('click', handleMultipleTaskSelection);
 
+// Handle Multiple Task Selection for Copy
 function handleMultipleTaskSelection() {
   const selectedTasks = [];
   const taskItems = document.querySelectorAll('.task-item');
-  
   taskItems.forEach(taskItem => {
     const checkbox = taskItem.querySelector('.select-task');
-    if (checkbox && checkbox.checked) {
-      selectedTasks.push(taskItem);
-    }
+    if (checkbox && checkbox.checked) selectedTasks.push(taskItem);
   });
-  
-  if (selectedTasks.length > 0) {
-    openCopyModal(selectedTasks);
-  } else {
-    alert('Please select at least one task to copy.');
-  }
+
+  if (selectedTasks.length > 0) openCopyModal(selectedTasks);
+  else alert('Please select at least one task to copy.');
 }
 
+// Open Copy Modal
 function openCopyModal(tasks, day = '') {
   copyModal.classList.add('active');
-  
   const onConfirmCopy = () => {
     const targetDay = copyDestination.value;
     copyTasksToOtherDay(tasks, targetDay);
     closeCopyModal();
     confirmCopy.removeEventListener('click', onConfirmCopy); // Remove event listener to avoid multiple attachments
   };
-  
   confirmCopy.addEventListener('click', onConfirmCopy);
 }
 
+// Close Copy Modal
 function closeCopyModal() {
   copyModal.classList.remove('active');
 }
 
+// Copy Tasks to Other Day
 function copyTasksToOtherDay(tasks, targetDay) {
   const targetColumn = document.getElementById(targetDay);
   const targetList = targetColumn.querySelector('.task-list');
-
   tasks.forEach(task => {
-    // Clone the task item
     const taskClone = task.cloneNode(true);
-    
-    // Uncheck the checkbox of the copied task
     taskClone.querySelector('.select-task').checked = false;
 
-    // Add the copy button event listener ONLY ONCE to the cloned task
-    taskClone.querySelector('.copy').addEventListener('click', () => {
-      openCopyModal([taskClone]);
-    });
-
-    // Append the cloned task to the target list
+    taskClone.querySelector('.copy').addEventListener('click', () => openCopyModal([taskClone]));
     targetList.appendChild(taskClone);
 
-    // Add event listeners for the copied task (complete, delete, etc.)
     taskClone.querySelector('.complete').addEventListener('click', () => {
       taskClone.classList.toggle('completed');
       const targetDay = taskClone.closest('.day-column').id;
@@ -232,78 +227,54 @@ function copyTasksToOtherDay(tasks, targetDay) {
     });
   });
 
-  // Save the tasks again after copying
-  saveTasks();
+  saveTasks(); // Save after copying
 }
 
-// Event listener for adding new tasks
-addTask.addEventListener('click', addNewTask);
+// Handle Enter Key Press for Adding Tasks
+function handleEnterKeyPress(e) {
+  if (e.key === 'Enter') addNewTask(); // Call addNewTask function when Enter is pressed
+}
 
-// Initial load of tasks
-loadTasks();
-
-// Event listener for Enter key press to add task
-taskTitle.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') {
-    addNewTask();  // Call the addNewTask function when Enter is pressed
-  }
-});
-
-// Event listener for the 'Uncheck All Tasks' button
-uncheckAllTasks.addEventListener('click', () => {
+// Uncheck All Tasks
+function handleUncheckAllTasks() {
   const taskItems = document.querySelectorAll('.task-item');
-  
   taskItems.forEach(taskItem => {
-    // Uncheck the checkbox for each task
     const checkbox = taskItem.querySelector('.select-task');
-    if (checkbox && checkbox.checked) {
-      checkbox.checked = false;
-    }
-    
-    // Remove the 'completed' class from each task
+    if (checkbox && checkbox.checked) checkbox.checked = false;
     taskItem.classList.remove('completed');
   });
 
-  // Reset all daily progress and the overall weekly progress
   Object.keys(dayProgress).forEach(day => {
     dayProgress[day] = 0;
     updateDailyProgress(day);
   });
+  updateWeeklyProgress();
+  saveTasks();
+}
 
-  updateWeeklyProgress(); // Update the overall weekly progress
-  saveTasks(); // Save the updated task state
-});
-let isAscending = true;  // Track sorting order (true for low-to-high, false for high-to-low)
-
-const sortTasksByEffortButton = document.getElementById('sortTasks');
-
-sortTasksByEffortButton.addEventListener('click', () => {
-  sortTasksByEffort();
-  isAscending = !isAscending;  // Toggle the sorting order
-});
-
-function sortTasksByEffort() {
+// Handle Sorting Tasks by Effort
+function handleSortTasksByEffort() {
   Object.keys(dayProgress).forEach(day => {
     const dayColumn = document.getElementById(day);
     const taskList = dayColumn.querySelector('.task-list');
     const tasks = Array.from(taskList.children);
 
-    // Sort the tasks based on the effort level (low, medium, high)
     tasks.sort((a, b) => {
       const effortA = a.classList.contains('Effort-low') ? 1 :
                       a.classList.contains('Effort-medium') ? 2 : 3;
       const effortB = b.classList.contains('Effort-low') ? 1 :
                       b.classList.contains('Effort-medium') ? 2 : 3;
 
-      return isAscending ? effortA - effortB : effortB - effortA;  // Sort based on the current order
+      return isAscending ? effortA - effortB : effortB - effortA;
     });
 
-    // Clear the current task list and append the sorted tasks
-    taskList.innerHTML = '';
-    tasks.forEach(task => {
-      taskList.appendChild(task);
-    });
+    taskList.innerHTML = ''; // Clear the current task list
+    tasks.forEach(task => taskList.appendChild(task));
   });
 
-  saveTasks(); // Save the sorted tasks to local storage
+  saveTasks(); // Save after sorting
+  isAscending = !isAscending; // Toggle sorting order
 }
+
+// Initial Tasks Load
+loadTasks();
