@@ -14,7 +14,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Task Manager */
+/* Task Manager Container */
 .task-manager {
   width: 95%;
   max-width: 1600px;
@@ -135,12 +135,20 @@ header h1 {
   align-items: center;
   border-left: 8px solid;
   font-weight: bold;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 
+.task-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Effort Levels */
 .Effort-low { border-color: #20c997; }
 .Effort-medium { border-color: #ffc107; }
 .Effort-high { border-color: #dc3545; }
 
+/* Task Item Styling */
 .task-item span {
   flex: 1;
   margin-left: 15px;
@@ -157,12 +165,42 @@ header h1 {
   cursor: pointer;
   font-size: 1.5rem;
   font-weight: bold;
+  position: relative;
 }
 
 .task-item .actions button.complete { color: #28a745; }
 .task-item .actions button.delete { color: #dc3545; }
 .task-item .actions button.copy { color: #ffc107; }
 
+/* Tooltip Styling */
+/* Tooltip Styling for Task Buttons */
+.task-item .actions button {
+  position: relative; /* Make sure the tooltip can be positioned relative to the button */
+}
+
+.task-item .actions button:before {
+  content: attr(data-tooltip); /* Tooltip content comes from the data-tooltip attribute */
+  position: absolute;
+  top: -30px; /* Adjust tooltip position */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap; /* Ensure tooltip text doesn't wrap */
+  opacity: 0; /* Tooltip is initially hidden */
+  visibility: hidden; /* Make it invisible by default */
+  transition: opacity 0.3s ease-in-out; /* Smooth transition */
+}
+
+.task-item .actions button:hover:before {
+  opacity: 1; /* Show tooltip when hovering */
+  visibility: visible; /* Ensure tooltip becomes visible */
+}
+
+/* Task Item Completed */
 .task-item.completed {
   text-decoration: line-through;
   opacity: 0.7;
@@ -251,4 +289,22 @@ header h1 {
 
 .sidebar-btn.active {
   background: rgba(255,255,255,0.3);
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2575fc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1a56d9;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
