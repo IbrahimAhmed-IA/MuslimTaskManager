@@ -9,6 +9,10 @@ const copyDestination = document.getElementById('copyDestination');
 const confirmCopy = document.getElementById('confirmCopy');
 const copySelectedTasks = document.getElementById('copySelectedTasks');
 const uncheckAllTasks = document.getElementById('uncheckAllTasks'); // New button reference
+const editModal = document.getElementById('editModal'); // Reference to the edit modal
+const editModalTitle = document.getElementById('editModalTitle'); // Title input in the edit modal
+const editModalEffort = document.getElementById('editModalEffort'); // Effort input in the edit modal
+const confirmEdit = document.getElementById('confirmEdit'); // Confirm button in the edit modal
 let weeklyProgress = 0;
 
 const EffortWeights = {
@@ -138,6 +142,7 @@ function createTaskItem(title, day, Effort, completed, id = Date.now()) {
       <button class="complete"><i class="fas fa-check"></i></button>
       <button class="delete"><i class="fas fa-trash"></i></button>
       <button class="copy"><i class="fas fa-copy"></i></button>
+      <button class="edit"><i class="fas fa-edit"></i></button> <!-- New Edit Button -->
     </div>
   `;
 
@@ -157,7 +162,55 @@ function createTaskItem(title, day, Effort, completed, id = Date.now()) {
     openCopyModal([taskItem], day);
   });
 
+  taskItem.querySelector('.edit').addEventListener('click', () => {
+    openEditModal(taskItem, day);  // Trigger the edit modal when edit button is clicked
+  });
+
   return taskItem;
+}
+
+function openEditModal(taskItem, day) {
+  // Pre-fill the edit modal with the current task details
+  const oldTitle = taskItem.querySelector('span').textContent;
+  const oldEffort = Array.from(taskItem.classList).find(cls => cls.startsWith('Effort-')).split('-')[1];
+
+  editModalTitle.value = oldTitle;
+  editModalEffort.value = oldEffort;
+
+  // Show the edit modal
+  editModal.classList.add('active');
+
+  // Handle the save button inside the modal
+  confirmEdit.onclick = function() {
+    const newTitle = editModalTitle.value.trim();
+    const newEffort = editModalEffort.value;
+
+    if (!newTitle) {
+      alert('Task title cannot be empty.');
+      return;
+    }
+
+    if (!EffortWeights[newEffort]) {
+      alert('Invalid priority. Please enter low, medium, or high.');
+      return;
+    }
+
+    // Remove the task from the current list
+    taskItem.remove();
+
+    // Add the task again with updated details
+    const newTaskItem = createTaskItem(newTitle, day, newEffort, false);
+    const dayColumn = document.getElementById(day);
+    const taskList = dayColumn.querySelector('.task-list');
+    taskList.appendChild(newTaskItem);
+
+    // Close the edit modal
+    editModal.classList.remove('active');
+
+    // Update progress and save tasks
+    updateDailyProgress(day);
+    saveTasks();
+  };
 }
 
 copySelectedTasks.addEventListener('click', handleMultipleTaskSelection);
@@ -273,6 +326,7 @@ uncheckAllTasks.addEventListener('click', () => {
   updateWeeklyProgress(); // Update the overall weekly progress
   saveTasks(); // Save the updated task state
 });
+
 let isAscending = true;  // Track sorting order (true for low-to-high, false for high-to-low)
 
 const sortTasksByEffortButton = document.getElementById('sortTasks');
