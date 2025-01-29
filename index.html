@@ -6,7 +6,6 @@
   <title>Muslim Task Manager</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  
 </head>
 <body>
   <div class="sidebar">
@@ -96,6 +95,7 @@
     </div>
   </div>
 
+  <!-- Copy Modal -->
   <div class="modal" id="copyModal">
     <div class="modal-content">
       <h3>Copy Task To:</h3>
@@ -109,6 +109,20 @@
         <option value="friday">Friday</option>
       </select>
       <button id="confirmCopy">Copy</button>
+    </div>
+  </div>
+
+  <!-- Edit Task Modal (New Modal Added) -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <h3>Edit Task</h3>
+      <input type="text" id="editModalTitle" placeholder="Task Title">
+      <select id="editModalEffort">
+        <option value="low">Low priority</option>
+        <option value="medium">Medium priority</option>
+        <option value="high">High priority</option>
+      </select>
+      <button id="confirmEdit">Confirm Edit</button>
     </div>
   </div>
 
